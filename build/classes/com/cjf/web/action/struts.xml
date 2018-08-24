@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+	<!-- # struts.objectFactory = spring 将action的创建交给spring容器 struts.objectFactory.spring.autoWire 
+		= name spring负责装配Action依赖属性 -->
+
+	<constant name="struts.action.extension" value="action" />
+
+	<constant name="struts.objectFactory" value="spring"></constant>
+
+	<package name="myUserTest" namespace="/" extends="json-default">
+
+		<interceptors>
+			<!-- 注册拦截器 -->
+			<interceptor name="loginInterceptor"
+				class="com.cjf.interceptor.LoginInterceptor">
+			</interceptor>
+
+			<!-- 注册拦截器栈 -->
+			<interceptor-stack name="myStack">
+				<interceptor-ref name="loginInterceptor">
+					<param name="excludeMethods">login,categoryList</param>
+				</interceptor-ref>								
+				<!-- 文件上传 -->
+				<interceptor-ref name="defaultStack">
+					<param name="fileUpload.maximumSize">500000000</param>
+					<param name="fileUpload.allowedTypes">image/jpeg,image/jpg,image/gif</param>
+					<param name="fileUpload.allowedExtensions">.jpg</param>
+				</interceptor-ref>
+			</interceptor-stack>
+		</interceptors>
+		<!-- 指定包中的默认拦截器栈 -->
+		<default-interceptor-ref name="myStack"></default-interceptor-ref>
+
+		<!-- 定义全局结果集 -->
+		<global-results>
+			<result name="tologin" type="redirect">/login.jsp</result>
+		</global-results>
+
+		<global-exception-mappings>
+			<exception-mapping result="error"
+				exception="java.lang.RuntimeException"></exception-mapping>
+		</global-exception-mappings>
+
+		<!--文件上传测试 -->
+		<!-- <action name="FailTestAction_*" class="com.cjf.web.action.FileTestAction" 
+			method="{1}"> <result name="success">/uploadSuccess.jsp</result> <result 
+			name="error">/uploadFail.jsp</result> </action> -->
+
+
+		<action name="AdminAction_*" class="adminAction" method="{1}">
+
+			<result name="olist">/admin/order/list.jsp</result>
+			<result name="plist">/admin/product/list.jsp</result>
+
+			<!-- 跳转的另一个action -->
+			<result name="toAllproduct" type="redirectAction">
+				<param name="actionName">AdminAction_queryAllProduct.action</param>
+				<param name="namespace">/</param>
+			</result>
+		</action>
+
+		<action name="ProductAction_*" class="productAction"
+			method="{1}">
+			<result name="toHome">/index.jsp</result>
+			<!-- 将返回类型设置为json -->
+			<result name="success" type="json">
+				<param name="root">categoryListJson</param>
+			</result>
+
+			<result name="product_list">/product_list.jsp</result>
+			<result name="product_info">/product_info.jsp</result>
+			<result name="cart" type="redirect">/cart.jsp</result>
+			<result name="order_info" type="redirect">/order_info.jsp</result>
+			<result name="order_list">/order_list.jsp</result>
+		</action>
+
+		<action name="UserAction_*" class="userAction" method="{1}">
+			<result name="toHome" type="redirectAction">
+				<param name="actionName">ProductAction_index.action</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="error">/login.jsp</result>
+			<result name="registerSuccess" type="redirect">/registerSuccess.jsp
+			</result>
+			<result name="registerFail" type="redirect">/registerFail.jsp</result>
+		</action>
+
+	</package>
+</struts>
+	

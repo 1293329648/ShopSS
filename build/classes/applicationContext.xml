@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns="http://www.springframework.org/schema/beans" 
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:aop="http://www.springframework.org/schema/aop" 
+		xmlns:tx="http://www.springframework.org/schema/tx"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd 
+							http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd 
+							http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd 
+							http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd ">
+	
+	<!-- 读取db.properties文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+	
+	<!-- 配置c3p0连接池 -->
+	<bean name="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" >
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}" ></property>
+		<property name="driverClass" value="${jdbc.driverClass}" ></property>
+		<property name="user" value="${jdbc.user}" ></property>
+		<property name="password" value="${jdbc.password}" ></property>
+	</bean>
+	
+	<!-- 核心事务管理器 -->
+	<bean name="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager" >
+		<property name="sessionFactory" ref="sessionFactory" ></property>
+	</bean>
+	
+	<!-- 开启注解事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+		
+	<bean name="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean" >
+		<property name="dataSource" ref="dataSource" ></property>
+		<!-- 配置hibernate基本信息 -->
+		<property name="hibernateProperties">
+			<props>
+				<!--  必选配置 -->
+				<prop key="hibernate.dialect" >org.hibernate.dialect.MySQLDialect</prop>				
+				<!--  可选配置 -->
+				<prop key="hibernate.show_sql" >true</prop>
+				<prop key="hibernate.format_sql" >true</prop>
+				<prop key="hibernate.hbm2ddl.auto" >update</prop>
+				<prop key="hibernate.connection.autocommit">true</prop>
+			</props>
+		</property>
+		<!-- 引入orm元数据,指定orm元数据所在的包路径,spring会自动读取包中的所有配置 -->
+		<property name="mappingDirectoryLocations" value="classpath:com/cjf/entity" ></property>
+	</bean>	
+	
+	<!-- jdbcTemplate -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+	
+	<!-- user action -->
+	<!-- 注意:Action对象作用范围一定是多例的.这样才符合struts2架构 -->
+	<bean name="userAction" class="com.cjf.web.action.UserAction" scope="prototype" >
+		<property name="userService" ref="userService" ></property>
+	</bean>
+	<!-- service -->
+	<bean name="userService" class="com.cjf.service.Impl.UserServiceImpl" >
+		<property name="userdao" ref="userDao" ></property>
+	</bean>
+	<!-- dao -->
+	<bean name="userDao" class="com.cjf.dao.Impl.UserDaoImpl" >
+		<!-- 注入sessionFactory -->
+		<property name="sessionFactory" ref="sessionFactory" ></property>
+	</bean>
+	
+		<!-- product action Product-->
+	<!-- 注意:Action对象作用范围一定是多例的.这样才符合struts2架构 -->
+	<bean name="productAction" class="com.cjf.web.action.ProductAction" scope="prototype" >
+		<property name="productservice" ref="productService" ></property>
+	</bean>
+	<!-- service -->
+	<bean name="productService" class="com.cjf.service.Impl.ProductServiceImpl" >
+		<property name="productdao" ref="productDao" ></property>
+	</bean>
+	<!-- dao -->
+	<bean name="productDao" class="com.cjf.dao.Impl.ProductDaoImpl" >
+		<!-- 注入sessionFactory -->
+		<property name="jdbcTemplate" ref="jdbcTemplate"></property>
+	</bean>
+	
+	<!-- admin action --> 
+	<bean name="adminAction" class="com.cjf.web.action.AdminAction" scope="prototype" >
+		<property name="productService" ref="productService" ></property>
+	</bean>
+	
+	<!-- AutoLoginFilter -->
+	<bean name="autoLoginFilter"  class="com.cjf.web.filter.AutoLoginFilter" scope="prototype">
+		<property name="userService" ref="userService" ></property>
+	</bean>
+	
+	
+</beans>
